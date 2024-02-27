@@ -1,9 +1,6 @@
 #include "globals.h"
-uint8_t prev_tim_cnt = 0;
 
-uint8_t enc_input_head = 0;
-uint8_t enc_input_insert_ptr = 0;
-uint8_t enc_input_items = 0;
+volatile EncoderInput direction = ENCODER_NO_INPUT;
 
 void EXTI4_IRQHandler(void)
 {

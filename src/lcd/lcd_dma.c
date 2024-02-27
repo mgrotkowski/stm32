@@ -52,28 +52,28 @@ eliminated during optimization if the "bit" argument is a constant. */
 
 
 static void LCDwrite8DMA(uint32_t data, enum CommandFlag command) {
-    DMA_transfer_request(data, DMA_BYTE, 1, command);  
+    DMA_transfer_request(data, 1, command);  
 }
 
 static void LCDwrite16DMA(uint32_t data, enum CommandFlag command)
 {
-    DMA_transfer_request(data, DMA_HALF_WORD, 2, command);  
+    DMA_transfer_request(data, 2, command);  
 }
 
 static void LCDwrite24DMA(uint32_t data, enum CommandFlag command)
 {
-    DMA_transfer_request(data, DMA_BYTE, 3, command);
+    DMA_transfer_request(data, 3, command);
 }
 
 static void LCDwrite32DMA(uint32_t data, enum CommandFlag command)
 {
-    DMA_transfer_request(data, DMA_WORD, 4, command);
+    DMA_transfer_request(data, 4, command);
 }
 
 static void LCDwriteimageDMA(uint16_t num_items)
 {
    imageBytes_lock = 1;
-   DMA_transfer_request(0, DMA_BYTE, num_items, IMAGE);
+   DMA_transfer_request(0, num_items, IMAGE);
 }
 
 static void LCDwriteCommandDMA(uint32_t data)
@@ -159,7 +159,6 @@ static void LCDcontrollerConfigureDMA(void) {
   /* Display on */
   LCDwriteCommandDMA(0x29);
 
-  /* Deactivate chip select */
 }
 
 
@@ -257,7 +256,6 @@ void LCDcube() {
     }
 }
 
-EncoderInput enc_input[10];
 void LCDcubeEnc()
 
 {
@@ -296,56 +294,6 @@ void LCDcubeEnc()
     }
 
 }
-//void LCDcubeEnc()
-//
-//{
-//
-//  uint32_t gce_offsets[30] = {843, 7703, 14683, 21707, 28596, 37046, 45604,
-//                              53773, 61564, 69542, 77604, 85719, 93802, 
-//                                101769, 110020, 117810, 125414,
-//                              133218, 141082, 148735, 155963, 163042,
-//                              171240,  179192, 186898, 194720, 202536,
-//                              210569, 217698, 226250};
-//    int idx = 0;
-//    EncoderInput command;
-//    LCDDisplayFrame(parseGIFHeaders(gce_offsets[0]));
-//    while(1)
-//    {
-//        irq_level_t primask = IRQprotectAll();
-//        if (!enc_input_items)
-//        {
-//            IRQunprotectAll(primask);
-//        }
-//        else
-//        {
-//            command = enc_input[enc_input_head++];
-//            enc_input_items--;
-//            enc_input_head %= 10;
-//            if (command == ENCODER_FORWARD)
-//                idx++;
-//            if (command == ENCODER_REVERSE)
-//                idx--;
-//            IRQunprotectAll(primask);
-//            if (idx < 0)
-//                idx += 30;
-//            idx %= 30;
-//            int temp = idx;
-//            LCDDisplayFrame(parseGIFHeaders(gce_offsets[idx]));
-//            if (temp / 10)
-//            {
-//                LCDputcharDMA(0x30 + temp/10);
-//                temp %= 10;
-//            }
-//                
-//            LCDputcharDMA(0x30 + temp);
-//            LCDgoto(0,0);
-//        }
-//
-//    }
-//
-//}
-
-volatile EncoderInput direction = ENCODER_NO_INPUT;
 
 void DebugTIM()
 

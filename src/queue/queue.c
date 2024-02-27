@@ -10,15 +10,12 @@ uint32_t dma_queue_head = 0;
 
 //Insert a packet to global dma queue
 void global_queue_insert( uint32_t data_location, 
-                          enum DMA_memory_width data_width, 
                           uint32_t num_items,
                           enum CommandFlag command
                           )
 {
     // queue should be locked when accessed
     // In an unfortunate event that the queue is full: spin
-    while(dma_queue_items >= QUEUE_SIZE)
-        Delay(1);
     if (dma_queue_items < QUEUE_SIZE)
     {
         if (command != IMAGE)
@@ -30,7 +27,6 @@ void global_queue_insert( uint32_t data_location,
         }
         }
         global_dma_queue[dma_queue_insert_ptr].num_items = num_items;
-        global_dma_queue[dma_queue_insert_ptr].data_width = data_width;
         global_dma_queue[dma_queue_insert_ptr].command = command;
         ++dma_queue_insert_ptr;
         dma_queue_insert_ptr %= QUEUE_SIZE;

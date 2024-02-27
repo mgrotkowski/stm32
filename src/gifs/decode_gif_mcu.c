@@ -73,7 +73,7 @@ static uint32_t get_next_chunk_args(uint8_t* file_ptr, decoding_args* args)
 
 // Get variable length LZW code from 4-byte storage chunk
 // shift current chunk or get new one if current code 
-// exceedes number of available bits 
+// excedes number of available bits 
 // code_bits - length in bits of LZW code to read from chunk
 // code_mask - mask corresponding to code_bits length code
 

@@ -8,7 +8,6 @@ DMApacket first_packet;
 
 static void initiate_transfer(
                        uint32_t data_location, 
-                       enum DMA_memory_width data_width, 
                        uint32_t num_items, 
                        enum CommandFlag command
                        )
@@ -42,7 +41,6 @@ static void initiate_transfer(
     if (command != IMAGE) {
     for(int i = 0; i < num_items; i++)
         first_packet.packets[i] =  (uint8_t)(0xff & (data_location >> 8*(num_items - 1 -i)));
-    first_packet.data_width = data_width;
     first_packet.num_items = num_items;
     first_packet.command = command;
     DMA1_Stream5->M0AR = (uint32_t) first_packet.packets;
@@ -61,7 +59,6 @@ static void initiate_transfer(
 }
 
 void DMA_transfer_request(uint32_t data_location, 
-                          enum DMA_memory_width data_width, 
                           uint32_t num_items,
                           enum CommandFlag command)
 {
@@ -69,11 +66,11 @@ void DMA_transfer_request(uint32_t data_location,
     if ((DMA1_Stream5->CR & DMA_SxCR_EN) == 0 && (DMA1->HISR & DMA_HISR_TCIF5) == 0)
     {
         IRQunprotectAll(primask);
-        initiate_transfer(data_location, data_width, num_items, command);
+        initiate_transfer(data_location, num_items, command);
     }
     else
     {
-        global_queue_insert(data_location, data_width, num_items, command);
+        global_queue_insert(data_location, num_items, command);
         IRQunprotectAll(primask);
     }
 }

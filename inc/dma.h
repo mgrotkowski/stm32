@@ -20,7 +20,6 @@ enum CommandFlag
 
 
 void DMA_transfer_request(uint32_t data_location, 
-                          enum DMA_memory_width data_width,
                           uint32_t num_items,
                           enum CommandFlag command);
 

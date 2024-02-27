@@ -12,19 +12,9 @@
 #define SCREEN_HEIGHT 128
 #define NUM_FRAMES 30
 
-//typedef struct DMApacket
-//{
-//    uint32_t data_location;
-//    enum DMA_memory_width data_width;
-//    uint32_t num_items;
-//    enum CommandFlag command;
-//    
-//} DMApacket;
-
 typedef struct DMApacket
 {
     uint8_t packets[4];
-    enum DMA_memory_width data_width;
     uint16_t num_items;
     enum CommandFlag command;
     
