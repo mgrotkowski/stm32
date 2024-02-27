@@ -48,7 +48,10 @@ static void initiate_transfer(
     DMA1_Stream5->M0AR = (uint32_t) first_packet.packets;
     }
     else 
+    {
         DMA1_Stream5->M0AR = (uint32_t) imageBytes;
+        last_command = IMAGE;
+    }
 
     DMA1_Stream5->NDTR = num_items;
     

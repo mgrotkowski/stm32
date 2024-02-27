@@ -3,9 +3,11 @@
 #include <fonts.h>
 #include <gpio.h>
 #include <lcd_board_def.h>
+#include <irq.h>
 #include "lcd_dma.h"
 #include "dma.h"
 #include "gpio_configure.h"
+#include "gif.h"
 #include "globals.h"
 
 /** The simple LCD driver (only text mode) for ST7735S controller
@@ -54,6 +56,7 @@ constants PIN_LCD_* and RCC_LCD_* are bit masks. */
 
 #define Tinit   150
 #define T120ms  (MAIN_CLOCK_MHZ * 120000 / 4)
+#define T6ms  (MAIN_CLOCK_MHZ * 6000 / 4)
 
 /* Text mode globals */
 
@@ -92,9 +95,10 @@ static void LCDwrite32DMA(uint32_t data, enum CommandFlag command)
     DMA_transfer_request(data, DMA_WORD, 4, command);
 }
 
-static void LCDwriteimageDMA()
+static void LCDwriteimageDMA(uint16_t num_items)
 {
-   DMA_transfer_request(0, DMA_BYTE, 128*160*2, IMAGE);
+   imageBytes_lock = 1;
+   DMA_transfer_request(0, DMA_BYTE, num_items, IMAGE);
 }
 
 static void LCDwriteCommandDMA(uint32_t data)
@@ -219,16 +223,17 @@ void LCDclearDMA() {
   int i, j;
 
   LCDsetRectangleDMA(0, 0, LCD_PIXEL_WIDTH - 1, LCD_PIXEL_HEIGHT - 1);
-  //for (i = 0; i < LCD_PIXEL_WIDTH; ++i) {
-  //  for (j = 0; j < LCD_PIXEL_HEIGHT; ++j) {
-  //    LCDwrite16DMA(BackColor, DATA);
-  //  }
-  //}
-  for (i = 0; i < LCD_PIXEL_HEIGHT; ++i) {
-    for (j = 0; j < LCD_PIXEL_WIDTH; ++j) {
-      LCDwrite16DMA(imageBytes[2*(i*LCD_PIXEL_WIDTH + j)] << 8 | imageBytes[2*(i*LCD_PIXEL_WIDTH + j) + 1], DATA);
+  for (i = 0; i < LCD_PIXEL_WIDTH; ++i) {
+    for (j = 0; j < LCD_PIXEL_HEIGHT; ++j) {
+      LCDwrite16DMA(BackColor, DATA);
     }
   }
+  //for (i = 0; i < LCD_PIXEL_HEIGHT; ++i) {
+   // for (j = 0; j < LCD_PIXEL_WIDTH; ++j) {
+    //  LCDwrite16DMA(imageBytes[2*(i*LCD_PIXEL_WIDTH + j)] << 8 | imageBytes[2*(i*LCD_PIXEL_WIDTH + j) + 1], DATA);
+    //}
+  //}
+  //LCDwriteimageDMA();
 
   LCDgoto(0, 0);
 }
@@ -236,9 +241,160 @@ void LCDclearDMA() {
 void LCDDisplayImage() {
 
   LCDgoto(0, 0);
+  //decodeGIF();
   LCDsetRectangleDMA(0, 0, LCD_PIXEL_WIDTH - 1, LCD_PIXEL_HEIGHT - 1);
-  LCDwriteimageDMA();
+//  LCDwriteimageDMA();
 
+}
+
+void LCDDisplayFrame(FrameMetadata frame)
+
+{
+
+  LCDgoto(0, 0);
+  //change write direction to work with image stored in 160 consecutive pixel strips
+  LCDwriteCommandDMA(0x36);
+  LCDwrite8DMA(0xA0, DATA);
+  decodeGIF_args(frame);
+  LCDsetRectangleDMA(frame.x_offset, 
+                     frame.y_offset, 
+                     frame.x_offset + frame.width - 1, 
+                     frame.y_offset + frame.height - 1);
+  LCDwriteimageDMA(frame.height * frame.width * 2);
+  //revert back
+  LCDwriteCommandDMA(0x36);
+  LCDwrite8DMA(0xC0, DATA);
+
+}
+
+uint8_t imageBytes_lock = 0;
+
+void LCDcube() {
+
+  int idx = 0;
+  while(1)
+    {
+        while(imageBytes_lock)
+            Delay(1);
+        LCDDisplayFrame(parseGIFHeaders(gce_offsets[idx++]));
+        idx %= 30;
+
+    }
+}
+
+EncoderInput enc_input[10];
+void LCDcubeEnc()
+
+{
+    int idx = 0;
+    LCDDisplayFrame(parseGIFHeaders(gce_offsets[0]));
+    while(1)
+    {
+        irq_level_t primask = IRQprotectAll();
+        if (direction == ENCODER_NO_INPUT)
+        {
+            IRQunprotectAll(primask);
+        }
+        else
+        {
+            if (direction == ENCODER_FORWARD)
+                idx++;
+            if (direction == ENCODER_REVERSE)
+                idx--;
+            direction = ENCODER_NO_INPUT;
+            IRQunprotectAll(primask);
+            if (idx < 0)
+                idx += 30;
+            idx %= 30;
+            int temp = idx;
+            LCDDisplayFrame(parseGIFHeaders(gce_offsets[idx]));
+            if (temp / 10)
+            {
+                LCDputcharDMA(0x30 + temp/10);
+                temp %= 10;
+            }
+                
+            LCDputcharDMA(0x30 + temp);
+            LCDgoto(0,0);
+        }
+
+    }
+
+}
+//void LCDcubeEnc()
+//
+//{
+//
+//  uint32_t gce_offsets[30] = {843, 7703, 14683, 21707, 28596, 37046, 45604,
+//                              53773, 61564, 69542, 77604, 85719, 93802, 
+//                                101769, 110020, 117810, 125414,
+//                              133218, 141082, 148735, 155963, 163042,
+//                              171240,  179192, 186898, 194720, 202536,
+//                              210569, 217698, 226250};
+//    int idx = 0;
+//    EncoderInput command;
+//    LCDDisplayFrame(parseGIFHeaders(gce_offsets[0]));
+//    while(1)
+//    {
+//        irq_level_t primask = IRQprotectAll();
+//        if (!enc_input_items)
+//        {
+//            IRQunprotectAll(primask);
+//        }
+//        else
+//        {
+//            command = enc_input[enc_input_head++];
+//            enc_input_items--;
+//            enc_input_head %= 10;
+//            if (command == ENCODER_FORWARD)
+//                idx++;
+//            if (command == ENCODER_REVERSE)
+//                idx--;
+//            IRQunprotectAll(primask);
+//            if (idx < 0)
+//                idx += 30;
+//            idx %= 30;
+//            int temp = idx;
+//            LCDDisplayFrame(parseGIFHeaders(gce_offsets[idx]));
+//            if (temp / 10)
+//            {
+//                LCDputcharDMA(0x30 + temp/10);
+//                temp %= 10;
+//            }
+//                
+//            LCDputcharDMA(0x30 + temp);
+//            LCDgoto(0,0);
+//        }
+//
+//    }
+//
+//}
+
+volatile EncoderInput direction = ENCODER_NO_INPUT;
+
+void DebugTIM()
+
+{
+
+    volatile uint16_t temp = TIM3->CNT;
+    while(1)
+    {
+            
+    if (temp / 10)
+        {
+                LCDputcharDMA(0x30 + temp/10);
+                temp %= 10;
+                LCDputcharDMA(0x30 + temp);
+        }
+    else
+    {
+        LCDputcharDMA(0x30 + temp);
+        LCDputcharDMA(' ');
+    }
+                
+        LCDgoto(0,0);
+        temp = TIM3->CNT;
+    }
 }
 
 
@@ -250,13 +406,15 @@ void LCDconfigure() {
   LCDsetColors(LCD_COLOR_WHITE, LCD_COLOR_BLUE);
   /* Initialize hardware. */
   DMAconfigure();
-  NVICconfigure();
   GPIOconfigure();
+  TIMconfigure();
   SPIconfigureDMA();
+  NVICconfigure();
   LCDcontrollerConfigureDMA();
   LCDclearDMA();
-  Delay(T120ms * 10);
   //LCDDisplayImage();
+  //DebugTIM();
+  LCDcubeEnc();
   
 }
 
@@ -293,3 +451,29 @@ void LCDputcharWrapDMA(char c) {
   }
   LCDputcharDMA(c);
 }
+
+
+
+void DebugTIMDir()
+
+{
+
+    LCDputcharDMA(' ');
+    LCDputcharDMA('1');
+    LCDgoto(0,0);
+    EncoderInput dir;
+
+    while(1)
+    {
+            
+        dir = direction;
+        if (dir == ENCODER_FORWARD)
+            LCDputcharDMA('+');
+        else if (dir == ENCODER_REVERSE)
+            LCDputcharDMA('-');
+
+        LCDgoto(0,0);
+    }
+        
+}
+

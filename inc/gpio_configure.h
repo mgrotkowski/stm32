@@ -26,6 +26,7 @@ void SPIconfigure(void);
 void SPIconfigureDMA(void);
 void DMAconfigure(void);
 void NVICconfigure(void);
+void TIMconfigure(void);
 
 void A0(uint32_t bit);
 void CS(uint32_t bit);

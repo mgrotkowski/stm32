@@ -4,6 +4,8 @@
 
 DMApacket global_dma_queue[];
 
+enum CommandFlag last_command = COMMAND;
+
 
 void DMA1_Stream5_IRQHandler()
 {
@@ -16,17 +18,26 @@ void DMA1_Stream5_IRQHandler()
             Delay(1);
         while(SPI3->SR & SPI_SR_BSY)
             Delay(1);
+        if (last_command == IMAGE)
+        {
+            imageBytes_lock = 0;
+            last_command = COMMAND;
+        }
+
         //Important to set this flag before reenabling DMA stream
         DMA1->HIFCR = DMA_HIFCR_CTCIF5; 
        // Delay(1);
-
+        
         if (dma_queue_items)
         {
             DMApacket packet = global_dma_queue[dma_queue_head];
             if (packet.command != IMAGE)
                 DMA1_Stream5->M0AR = (uint32_t) packet.packets;
             else 
+            {
                 DMA1_Stream5->M0AR = (uint32_t) imageBytes;
+                last_command = IMAGE;
+            }
             DMA1_Stream5->NDTR = packet.num_items;
             
             dma_queue_head++;

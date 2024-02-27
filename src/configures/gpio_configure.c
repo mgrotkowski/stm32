@@ -2,16 +2,52 @@
 
 // enable clocks needed for LCD (GPIOC, GPIOD), DMA1, SPI3
 void RCCconfigure(void) {
+
+    /***************LCD******************/
+
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
     RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN;
     RCC->APB1ENR |= RCC_APB1ENR_SPI3EN;
+
+    /***************ENCODER******************/
+
+    RCC->APB1ENR |= RCC_APB1ENR_TIM3EN; // counter
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN; // encoder pins
+    RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN; // SYSCFG for EXTI interrupts
+
+
+}
+
+
+//Call this function *AFTER* GPIOconfigure
+void TIMconfigure(void)
+{
+    TIM3->CR1 = TIM_CR1_URS;
+    TIM3->SMCR = TIM_SMCR_SMS_1 | TIM_SMCR_SMS_0; 
+    TIM3->CCMR1 = TIM_CCMR1_CC1S_0 | TIM_CCMR1_CC2S_0 |
+                  TIM_CCMR1_IC1F_0 | TIM_CCMR1_IC1F_1 |
+                  TIM_CCMR1_IC2F_0 | TIM_CCMR1_IC2F_1 ;
+    TIM3->CCER = TIM_CCER_CC1P | TIM_CCER_CC2P;
+    TIM3->PSC = 0;
+    TIM3->ARR = 95;
+    TIM3->EGR = TIM_EGR_UG;
+
+    GPIOafConfigure(GPIOB, 4, GPIO_OType_PP, GPIO_Low_Speed, 
+                    GPIO_PuPd_UP, GPIO_AF_TIM3);
+    GPIOafConfigure(GPIOB, 5, GPIO_OType_PP, GPIO_Low_Speed, 
+                    GPIO_PuPd_UP, GPIO_AF_TIM3); 
+    TIM3->CR1 |= TIM_CR1_CEN;
+
+
 }
 
 
 // Set SPI3 alternative functions to SCK, SDA pins
 void GPIOconfigure(void)
 {
+
+    /****************************LCD*******************************/
 
     // Configure A0, CS outputs
     CS(1);
@@ -29,6 +65,12 @@ void GPIOconfigure(void)
     SCK(0);
     GPIOoutConfigure(GPIO_LCD_SCK, LCD_SCK_PIN_N, GPIO_OType_PP,
                   GPIO_High_Speed, GPIO_PuPd_NOPULL);
+
+    /****************************ENCODER*******************************/
+    GPIOinConfigure(GPIOB, 4, GPIO_PuPd_NOPULL, EXTI_Mode_Interrupt, 
+                   EXTI_Trigger_Rising_Falling);
+    GPIOinConfigure(GPIOB, 5, GPIO_PuPd_NOPULL,  EXTI_Mode_Interrupt, 
+              EXTI_Trigger_Rising_Falling);
 }
 
 
@@ -81,9 +123,16 @@ void NVICconfigure(void)
 {
     DMA1->HISR = DMA_HIFCR_CTCIF5;
     NVIC_SetPriority(DMA1_Stream5_IRQn, 0);
+    NVIC_SetPriority(EXTI4_IRQn, 1);
+    NVIC_SetPriority(EXTI9_5_IRQn, 1);
     NVIC_EnableIRQ(DMA1_Stream5_IRQn);
-    
+    NVIC_EnableIRQ(EXTI4_IRQn);
+    NVIC_EnableIRQ(EXTI9_5_IRQn);
 }
+
+
+
+// Helper functions for communication with LCD driver
 
 void CS(uint32_t bit) {
   if (bit) {
