@@ -70,10 +70,12 @@ static void LCDwrite32DMA(uint32_t data, enum CommandFlag command)
     DMA_transfer_request(data, 4, command);
 }
 
+uint16_t prev_items = 0;
+
 static void LCDwriteimageDMA(uint16_t num_items)
 {
-   imageBytes_lock = 1;
    DMA_transfer_request(0, num_items, IMAGE);
+   prev_items = num_items;
 }
 
 static void LCDwriteCommandDMA(uint32_t data)
@@ -228,7 +230,7 @@ void LCDDisplayFrame(FrameMetadata frame)
   LCDgoto(0, 0);
   //change write direction to work with image stored in 160 consecutive pixel strips
   LCDwriteCommandDMA(0x36);
-  LCDwrite8DMA(0xA0, DATA);
+  LCDwrite8DMA(0x60, DATA);
   decodeGIF_args(frame);
   LCDsetRectangleDMA(frame.x_offset, 
                      frame.y_offset, 
@@ -236,8 +238,8 @@ void LCDDisplayFrame(FrameMetadata frame)
                      frame.y_offset + frame.height - 1);
   LCDwriteimageDMA(frame.height * frame.width * 2);
   //revert back
-  LCDwriteCommandDMA(0x36);
-  LCDwrite8DMA(0xC0, DATA);
+  //LCDwriteCommandDMA(0x36);
+  //LCDwrite8DMA(0xC0, DATA);
 
 }
 
@@ -248,8 +250,6 @@ void LCDcube() {
   int idx = 0;
   while(1)
     {
-        while(imageBytes_lock)
-            Delay(1);
         LCDDisplayFrame(parseGIFHeaders(gce_offsets[idx++]));
         idx %= 30;
 
@@ -276,6 +276,7 @@ void LCDcubeEnc()
                 idx--;
             direction = ENCODER_NO_INPUT;
             IRQunprotectAll(primask);
+
             if (idx < 0)
                 idx += 30;
             idx %= 30;
@@ -335,8 +336,6 @@ void LCDconfigure() {
   NVICconfigure();
   LCDcontrollerConfigureDMA();
   LCDclearDMA();
-  //LCDDisplayImage();
-  //DebugTIM();
   LCDcubeEnc();
   
 }

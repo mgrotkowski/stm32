@@ -4,13 +4,6 @@
 #include <stm32f411xe.h>
 #include <gpio.h>
 
-
-enum DMA_memory_width {
-    DMA_BYTE,
-    DMA_HALF_WORD,
-    DMA_WORD
-};
-
 enum CommandFlag
 {
     COMMAND,

@@ -18,11 +18,8 @@ void DMA1_Stream5_IRQHandler()
             Delay(1);
         while(SPI3->SR & SPI_SR_BSY)
             Delay(1);
-        if (last_command == IMAGE)
-        {
+        if (imageBytes_lock)
             imageBytes_lock = 0;
-            last_command = COMMAND;
-        }
 
         //Important to set this flag before reenabling DMA stream
         DMA1->HIFCR = DMA_HIFCR_CTCIF5; 
@@ -36,7 +33,7 @@ void DMA1_Stream5_IRQHandler()
             else 
             {
                 DMA1_Stream5->M0AR = (uint32_t) imageBytes;
-                last_command = IMAGE;
+                imageBytes_lock = 1;
             }
             DMA1_Stream5->NDTR = packet.num_items;
             

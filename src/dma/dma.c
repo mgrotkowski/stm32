@@ -17,27 +17,6 @@ static void initiate_transfer(
 //    //2. Request another transfer while DMA is not done -> Try to Insert into the queue  -> DMA Interrupt before locking the queue
 //    //3. DMA Interrupt finishes, founds no items in the queue it is done 
 //    //4. Finish queue insertion, next DMA interrupt 
-//    if (dma_queue_items)
-//    {
-//        global_queue_insert(data_location, data_width, num_items, command);
-//        DMA1_Stream5->M0AR = (uint32_t) global_dma_queue[dma_queue_head].packets;
-//        DMA1_Stream5->NDTR = global_dma_queue[dma_queue_head].num_items;
-//        A0(global_dma_queue[dma_queue_head].command);
-//        dma_queue_head++;
-//        dma_queue_items--;
-//        dma_queue_head %= QUEUE_SIZE;
-//    }
-//    else
-//    {
-//        for(int i = 0; i < num_items; i++)
-//            first_packet.packets[i] =  (uint8_t)(0xff & (data_location >> 8*(num_items - 1 -i)));
-//        first_packet.data_width = data_width;
-//        first_packet.num_items = num_items;
-//        first_packet.command = command;
-//        DMA1_Stream5->M0AR = (uint32_t) first_packet.packets;
-//        DMA1_Stream5->NDTR = num_items;
-//        A0(command);
-//    }
     if (command != IMAGE) {
     for(int i = 0; i < num_items; i++)
         first_packet.packets[i] =  (uint8_t)(0xff & (data_location >> 8*(num_items - 1 -i)));
@@ -49,6 +28,7 @@ static void initiate_transfer(
     {
         DMA1_Stream5->M0AR = (uint32_t) imageBytes;
         last_command = IMAGE;
+        imageBytes_lock = 1;
     }
 
     DMA1_Stream5->NDTR = num_items;

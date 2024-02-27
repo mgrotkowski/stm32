@@ -7,7 +7,6 @@
 
 
 #define QUEUE_SIZE 1024 
-#define MSIZE_flags (const uint32_t[]){0, DMA_SxCR_MSIZE_0, DMA_SxCR_MSIZE_1}
 #define SCREEN_WIDTH 160
 #define SCREEN_HEIGHT 128
 #define NUM_FRAMES 30
@@ -29,10 +28,6 @@ typedef enum EncoderInput
 
 } EncoderInput;
 
-extern EncoderInput enc_input[10];
-extern uint8_t enc_input_head;
-extern uint8_t enc_input_insert_ptr;
-extern uint8_t enc_input_items;
 
 extern volatile EncoderInput direction;
 
@@ -42,8 +37,8 @@ extern uint32_t dma_queue_items;
 extern DMApacket global_dma_queue[QUEUE_SIZE];
 extern DMApacket first_packet;
 extern enum CommandFlag last_command;
-
 extern uint8_t imageBytes_lock;
+extern uint16_t prev_items;
 
 extern uint8_t imageBytes[2*SCREEN_WIDTH*SCREEN_HEIGHT];
 extern const uint8_t gifBytes[];
