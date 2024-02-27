@@ -10,35 +10,10 @@
 #include "gif.h"
 #include "globals.h"
 
-/** The simple LCD driver (only text mode) for ST7735S controller
-    and STM32F2xx or STM32F4xx **/
-
-/* Microcontroller pin definitions:
-constants LCD_*_GPIO_N are port letter codes (A, B, C, ...),
-constants LCD_*_PIN_N are the port output numbers (from 0 to 15),
-constants GPIO_LCD_* are memory pointers,
-constants PIN_LCD_* and RCC_LCD_* are bit masks. */
-
-#define GPIO_LCD_CS   xcat(GPIO, LCD_CS_GPIO_N)
-#define GPIO_LCD_A0   xcat(GPIO, LCD_A0_GPIO_N)
-#define GPIO_LCD_SDA  xcat(GPIO, LCD_SDA_GPIO_N)
-#define GPIO_LCD_SCK  xcat(GPIO, LCD_SCK_GPIO_N)
-
-#define PIN_LCD_CS    (1U << LCD_CS_PIN_N)
-#define PIN_LCD_A0    (1U << LCD_A0_PIN_N)
-#define PIN_LCD_SDA   (1U << LCD_SDA_PIN_N)
-#define PIN_LCD_SCK   (1U << LCD_SCK_PIN_N)
-
-#define RCC_LCD_CS    xcat3(RCC_AHB1ENR_GPIO, LCD_CS_GPIO_N, EN)
-#define RCC_LCD_A0    xcat3(RCC_AHB1ENR_GPIO, LCD_A0_GPIO_N, EN)
-#define RCC_LCD_SDA   xcat3(RCC_AHB1ENR_GPIO, LCD_SDA_GPIO_N, EN)
-#define RCC_LCD_SCK   xcat3(RCC_AHB1ENR_GPIO, LCD_SCK_GPIO_N, EN)
 
 /* Screen size in pixels, left top corner has coordinates (0, 0). */
-
 #define LCD_PIXEL_WIDTH   128
 #define LCD_PIXEL_HEIGHT  160
-
 /* Some color definitions */
 
 #define LCD_COLOR_WHITE    0xFFFF

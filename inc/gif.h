@@ -1,6 +1,7 @@
 #ifndef GIF_H
 #define GIF_H
 #include <stdint.h>
+#include "globals.h"
 
 // Loaded GIF offsets 
 #define MAX_CODE_SIZE 12
@@ -8,7 +9,7 @@
 #define DATA_OFFSET 0x35e
 #define LZW_SMALLEST_CODE_SIZE 6
 
-extern const uint32_t gce_offsets[30];
+extern const uint32_t gce_offsets[NUM_FRAMES];
 
 typedef struct FrameMetadata
 {

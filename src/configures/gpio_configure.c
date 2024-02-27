@@ -78,10 +78,6 @@ void GPIOconfigure(void)
 void DMAconfigure(void)
 {
    DMA1_Stream5->CR = DMA_SxCR_TCIE | DMA_SxCR_DIR_0 | DMA_SxCR_MINC;
-   // DMA1_Stream5->CR |= DMA_SxCR_MBURST_0 | DMA_SxCR_PL | DMA_Sx TODO: setting dma prio level,
-    // should we transfer data in bursts ? Probably yes because we want to sent RGB triples 6 byte wide...
-    // should we use fifo for transfers
-   
    DMA1_Stream5->PAR = (uint32_t) &SPI3->DR;
    
 }
